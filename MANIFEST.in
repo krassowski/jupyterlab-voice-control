@@ -24,5 +24,6 @@ prune binder
 global-exclude *~
 global-exclude *.pyc
 global-exclude *.pyo
+global-exclude *.ipynb
 global-exclude .git
 global-exclude .ipynb_checkpoints
