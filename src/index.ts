@@ -28,6 +28,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
     statusBar: IStatusBar | null,
     translator: ITranslator | null
   ) => {
+    console.log('JupyterLab extension jupyterlab-voice-control is activated!');
+
     translator = translator || nullTranslator;
     const trans = translator.load('jupyterlab-voice-control');
 
