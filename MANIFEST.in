@@ -16,6 +16,7 @@ graft src
 graft style
 graft schema
 graft ui-tests
+graft docs
 prune **/node_modules
 prune lib
 prune binder
