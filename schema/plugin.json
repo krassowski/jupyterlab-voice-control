@@ -1,0 +1,106 @@
+{
+  "jupyter.lab.shortcuts": [
+    {
+      "command": "vc:start-listening",
+      "keys": ["Alt V"],
+      "selector": "body"
+    }
+  ],
+  "jupyter.lab.setting-icon": "voice:enabled",
+  "jupyter.lab.setting-icon-label": "Voice Control",
+  "jupyter.lab.transform": true,
+  "title": "Voice Control",
+  "description": "jupyterlab-voice-control settings.",
+  "type": "object",
+  "properties": {
+    "confidenceThreshold": {
+      "title": "Confidence threshold",
+      "type": "number",
+      "default": 0.5,
+      "description": "Only execute commands when confidence is above given threshold."
+    },
+    "commands": {
+      "title": "Voice commands",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phrase": {
+            "type": "string",
+            "title": "Trigger phrase"
+          },
+          "command": {
+            "type": "string",
+            "title": "Jupyter command"
+          },
+          "arguments": {
+            "type": "object"
+          }
+        },
+        "required": ["command", "phrase"]
+      },
+      "default": [
+        {
+          "phrase": "yes",
+          "command": "vc:accept-suggestion"
+        },
+        {
+          "phrase": "run and insert",
+          "command": "notebook:run-cell-and-insert-below"
+        },
+        {
+          "phrase": "^delete (?<what>last word)",
+          "command": "vc:delete-text"
+        },
+        {
+          "phrase": "^type (?<text>.*)",
+          "command": "vc:type-text"
+        },
+        {
+          "phrase": "^(insert )?new line",
+          "command": "vc:type-text",
+          "arguments": {
+            "text": "\n"
+          }
+        },
+        {
+          "phrase": "scroll down",
+          "command": "vc:scroll-by",
+          "arguments": {
+            "top": 20
+          }
+        },
+        {
+          "phrase": "scroll up",
+          "command": "vc:scroll-by",
+          "arguments": {
+            "topPercent": -20
+          }
+        },
+        {
+          "phrase": "move cursor to the end",
+          "command": "vc:move-cursor",
+          "arguments": {
+            "to": "end"
+          }
+        },
+        {
+          "phrase": "move cursor to the beginning",
+          "command": "vc:move-cursor",
+          "arguments": {
+            "to": "start"
+          }
+        },
+        {
+          "phrase": "^open file (?<path>.*)",
+          "command": "filebrowser:open-path"
+        },
+        {
+          "phrase": "^open notebook (?<path>.*)",
+          "command": "vc:open-notebook"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
