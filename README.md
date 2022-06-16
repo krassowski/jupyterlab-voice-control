@@ -48,8 +48,8 @@ The trigger phrase can be a regular expression and include [_named capturing gro
 We provide command `vc:open-notebook` (by default under `open notebook (?<path>.*)`) which automatically
 appends notebook file extension (`.ipynb`) as it can be problematic for speech recognition software.
 
-[enabled]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/style/icons/enabled.svg?sanitize=true
-[disabled]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/style/icons/disabled.svg?sanitize=true
+[enabled]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/style/icons/microphone.svg?sanitize=true
+[disabled]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/style/icons/microphone-off.svg?sanitize=true
 
 ## Requirements
 
@@ -134,7 +134,7 @@ jlpm test
 
 #### Integration tests
 
-This extension uses [Playwright](https://playwright.dev/docs/intro/) for the integration tests (aka user level tests).
+This extension uses [Playwright](https://playwright.dev/docs/intro) for the integration tests (aka user level tests).
 More precisely, the JupyterLab helper [Galata](https://github.com/jupyterlab/jupyterlab/tree/master/galata) is used to handle testing the extension in JupyterLab.
 
 More information are provided within the [ui-tests](./ui-tests/README.md) README.
