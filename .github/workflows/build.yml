@@ -53,7 +53,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: extension-artifacts
-        path: dist/jupyterlab-voice-control*
+        path: dist/jupyterlab_voice_control*
         if-no-files-found: error
 
   test_isolated:
@@ -77,8 +77,7 @@ jobs:
         # Remove NodeJS, twice to take care of system and locally installed node versions.
         sudo rm -rf $(which node)
         sudo rm -rf $(which node)
-
-        pip install "jupyterlab~=3.1" jupyterlab-voice-control*.whl
+        pip install "jupyterlab~=3.1" jupyterlab_voice_control*.whl
 
 
         jupyter labextension list
@@ -108,7 +107,7 @@ jobs:
     - name: Install the extension
       run: |
         set -eux
-        python -m pip install "jupyterlab~=3.1" jupyterlab-voice-control*.whl
+        python -m pip install "jupyterlab~=3.1" jupyterlab_voice_control*.whl
 
     - name: Install dependencies
       working-directory: ui-tests
