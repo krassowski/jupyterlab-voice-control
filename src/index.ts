@@ -28,8 +28,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
     statusBar: IStatusBar | null,
     translator: ITranslator | null
   ) => {
-    console.log('JupyterLab extension jupyterlab-voice-control is activated!');
-
     translator = translator || nullTranslator;
     const trans = translator.load('jupyterlab-voice-control');
 
@@ -48,7 +46,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
     if (settingRegistry) {
       settingRegistry
         .load(plugin.id)
-        .then(controller.configure.bind(controller))
+        .then(settings => {
+          settings.changed.connect(controller.configure.bind(controller));
+          controller.configure(settings);
+        })
         .catch(reason => {
           console.error(
             'Failed to load settings for jupyterlab-voice-control.',
@@ -72,7 +73,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
         }
       });
     }
-    console.log(controller.statusChanged);
+
     if (statusBar) {
       statusBar.registerStatusItem(PLUGIN_ID, {
         item: new VoiceControlStatusIndicator(

@@ -19,6 +19,18 @@
       "default": 0.5,
       "description": "Only execute commands when confidence is above given threshold."
     },
+    "suggestionThreshold": {
+      "title": "Suggestion threshold",
+      "type": "number",
+      "default": 4,
+      "description": "Only suggest commands if they are as similar to trigger phrase so that no more than n edits would be needed to transform one into the other."
+    },
+    "speak": {
+      "title": "Enable speach syntehsis",
+      "type": "boolean",
+      "default": false,
+      "description": "Synthesise speach to provide verbal feedback."
+    },
     "commands": {
       "title": "Voice commands",
       "type": "array",
@@ -45,6 +57,10 @@
           "command": "vc:accept-suggestion"
         },
         {
+          "phrase": "^(?:accept )?(?<option>first|second|third|fourth|fifth) suggestion(?: please)?",
+          "command": "vc:accept-suggestion"
+        },
+        {
           "phrase": "run and insert",
           "command": "notebook:run-cell-and-insert-below"
         },
@@ -64,14 +80,14 @@
           }
         },
         {
-          "phrase": "scroll down",
+          "phrase": "scroll down(?: please)?",
           "command": "vc:scroll-by",
           "arguments": {
-            "top": 20
+            "topPercent": 20
           }
         },
         {
-          "phrase": "scroll up",
+          "phrase": "scroll up(?: please)?",
           "command": "vc:scroll-by",
           "arguments": {
             "topPercent": -20

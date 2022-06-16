@@ -2,6 +2,7 @@
 
 [![Github Actions Status](https://github.com/krassowski/jupyterlab-voice-control/workflows/Build/badge.svg)](https://github.com/krassowski/jupyterlab-voice-control/actions/workflows/build.yml)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/krassowski/jupyterlab-voice-control/main?urlpath=lab)
+[![PyPI version](https://img.shields.io/pypi/v/jupyterlab-voice-control.svg)](https://pypi.org/project/jupyterlab-voice-control/)
 
 ⚠️ **This extension is experimental** ⚠️
 
@@ -20,10 +21,19 @@ useful/promising and would like to leave any feedback which would be greatly app
 
 To use this extension look for a microphone (![microphone icon][enabled]) icon on the status bar.
 
-Press the disabled microphone icon (![disabled microphone icon][disabled]) to start voice recognition (or use <kbd>Alt</kbd> + <kbd>v</kbd> shortcut).
-You can use any of the commands available in the command palette, for example try "Download" or "Run selected cells".
+Press the disabled microphone icon (![disabled microphone icon][disabled]) to start voice recognition (or use <kbd>Alt</kbd> + <kbd>v</kbd> shortcut). You will need to agree for the browser to use your microphone:
 
-If no command matching your speech was found, the recognised speech will be shown on the status bar together with confidence estimate.
+![microphone access dialog in Chrome][chrome-microphone]
+
+You can use any of the commands available in the [command palette](https://jupyterlab.readthedocs.io/en/latest/user/commands.html), for example try "Download" or "Run selected cells".
+
+Sometimes the speech recognition may be inaccurate, or you may misremember the name of the command.
+In those cases the voice control assistant will prompt you with suggestions by showing
+"Did you mean..." and one or more suggestions on the status bar. You can accept the first suggestion by saying "yes",
+or choose a subsequent suggestion by saying for example "second suggestion".
+Speech synthesis option is also available (in the settings) if you prefer it over checking the status bar continuously.
+
+If there are no errors or suggestions, the recognised speech will be shown on the status bar together with a confidence estimate.
 
 By default commands recognised with low confidence (<50%) will not be executed (as it is deemed safer in case of any potentially destructive actions), but you can change the threshold in the settings.
 
@@ -50,6 +60,7 @@ appends notebook file extension (`.ipynb`) as it can be problematic for speech r
 
 [enabled]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/style/icons/microphone.svg?sanitize=true
 [disabled]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/style/icons/microphone-off.svg?sanitize=true
+[chrome-microphone]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/docs/images/chrome-microphone.png
 
 ## Requirements
 

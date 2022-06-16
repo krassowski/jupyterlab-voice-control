@@ -1,4 +1,4 @@
-import { StringExt } from '@lumino/algorithm';
+import { distance } from 'fastest-levenshtein';
 import { CommandRegistry } from '@lumino/commands';
 import { PartialJSONObject } from '@lumino/coreutils';
 
@@ -35,7 +35,7 @@ interface IJupyterCommand {
 }
 
 interface IAcceptOptions {
-  option?: number;
+  option?: string;
 }
 
 interface ISuggestion {
@@ -44,13 +44,23 @@ interface ISuggestion {
   score: number;
 }
 
+const ordinals: Record<string, number> = {
+  first: 1,
+  second: 2,
+  third: 3,
+  fourth: 4,
+  fifth: 5
+};
+
 export class VoiceController {
   statusChanged: Signal<VoiceController, IVoiceControlStatus>;
   private _status: IVoiceControlStatus;
   protected recognition: SpeechRecognition;
   protected confidenceThreshold: number;
   protected jupyterCommands: Map<string, IJupyterCommand>;
+  protected speak = false;
   protected commands: Array<IVoiceCommand> = [];
+  protected suggestionThreshold = 1;
   private counter = 0;
   private _currentSuggestions: ISuggestion[] = [];
 
@@ -77,10 +87,6 @@ export class VoiceController {
     this._status = {
       enabled: false
     };
-    // TODO: interim results, speech synthesis for questions, edit distance,
-    // offering several options, synonyms, translations, docs
-    // TODO: undo run "filebrowser:undo" in notebook - need to update the prefered based on context!
-    // TODO: make everything into a command and create a phrase → command map
     this.jupyterCommands = new Map();
     this.recognition.onresult = this.handleSpeechResult.bind(this);
 
@@ -99,8 +105,7 @@ export class VoiceController {
           showErrorMessage(title, 'Access to microphone was denied or blocked');
           break;
         case 'no-speech':
-          // showErrorMessage(title, 'No speech was detected');
-          this._status.error = 'No speech was detected';
+          this._status.error = this.trans.__('No speech was detected');
           break;
       }
     };
@@ -116,10 +121,12 @@ export class VoiceController {
       const match = phrase.match(new RegExp(command.phrase, 'i'));
       if (match != null) {
         if (!this.commandRegistry.hasCommand(command.command)) {
-          this._status.error = this.trans.__(
-            'Matched %1 phrase but command %2 is not in the registry',
-            command.phrase,
-            command.command
+          this.communicate(
+            this.trans.__(
+              'Matched "%1" phrase but command "%2" is not in the registry',
+              command.phrase,
+              command.command
+            )
           );
           return [];
         }
@@ -139,33 +146,48 @@ export class VoiceController {
       return [];
     } else {
       let best = 999;
-      let bestCandidate: IJupyterCommand | null = null;
+      let bestCandidates: IJupyterCommand[] = [];
       for (const [candidateLabel, command] of this.jupyterCommands.entries()) {
         const matchScore = Math.min(
-          StringExt.matchSumOfDeltas(candidateLabel, phrase)?.score || Infinity,
-          StringExt.matchSumOfDeltas(normalise(command.caption), phrase)
-            ?.score || Infinity
+          distance(candidateLabel, phrase),
+          distance(normalise(command.caption), phrase)
         );
         if (matchScore < best) {
           best = matchScore;
-          bestCandidate = command;
+          bestCandidates = [command];
+        } else if (matchScore === best) {
+          bestCandidates.push(command);
         }
       }
-      if (bestCandidate) {
-        this._status.error = this.trans.__(
+      if (bestCandidates.length !== 0 && best <= this.suggestionThreshold) {
+        const suggestionText = this.trans.__(
           'Did you mean %1?',
-          bestCandidate.label
+          bestCandidates.length === 1
+            ? bestCandidates[0].label
+            : bestCandidates
+                .map((candidate, index) => `${index + 1}) ${candidate.label}`)
+                .join(' or ')
         );
-        return [
-          {
-            id: bestCandidate.id,
-            label: bestCandidate.label,
+
+        this.communicate(suggestionText);
+
+        return bestCandidates.map(candidate => {
+          return {
+            id: candidate.id,
+            label: candidate.label,
             score: best
-          }
-        ];
+          };
+        });
       }
     }
     return [];
+  }
+
+  communicate(message: string): void {
+    this._status.error = message;
+    if (this.speak) {
+      speechSynthesis.speak(new SpeechSynthesisUtterance(message));
+    }
   }
 
   handleSpeechResult(event: SpeechRecognitionEvent): void {
@@ -175,7 +197,7 @@ export class VoiceController {
     this._status.lastConfidence = result.confidence;
     this.counter += 1;
     if (result.confidence < this.confidenceThreshold) {
-      this._status.error = 'Too low confidence. Speak up?';
+      this.communicate(this.trans.__('Too low confidence. Speak up?'));
       this.statusChanged.emit(this._status);
       console.log('Discarding the result due to too low confidence');
       return;
@@ -186,9 +208,19 @@ export class VoiceController {
   }
 
   acceptSuggestion(options: IAcceptOptions): void {
-    const option = options.option != null ? options.option - 1 : 0;
-    this.commandRegistry.execute(this._currentSuggestions[option].id);
-    this._currentSuggestions = [];
+    const option = options.option != null ? ordinals[options.option] - 1 : 0;
+    if (typeof option !== 'undefined') {
+      if (this._currentSuggestions.length > option) {
+        this.commandRegistry.execute(this._currentSuggestions[option].id);
+        this._currentSuggestions = [];
+      } else {
+        this.communicate(
+          this.trans.__('Suggestion %1 not available.', option + 1)
+        );
+      }
+    } else {
+      console.warn('Could not resolve option to accept suggestion', options);
+    }
   }
 
   set language(value: string) {
@@ -196,9 +228,7 @@ export class VoiceController {
   }
 
   updateGrammar(): void {
-    // const SpeechGrammarList = window.SpeechGrammarList || (window as any).webkitSpeechGrammarList;
     this.jupyterCommands.clear();
-    // const commands =
     this.commandRegistry
       .listCommands()
       .filter(commandID => this.commandRegistry.isVisible(commandID))
@@ -219,10 +249,6 @@ export class VoiceController {
         }
       })
       .filter(commandID => !!commandID);
-    // const grammar = '#JSGF V1.0; grammar commands; public <command> = ' + commands.join(' | ') + ' ;'
-    // const speechRecognitionList = new SpeechGrammarList();
-    // speechRecognitionList.addFromString(grammar, 1);
-    //this.recognition.grammars = speechRecognitionList;
   }
 
   get isEnabled(): boolean {
@@ -230,13 +256,11 @@ export class VoiceController {
   }
 
   configure(settings: ISettingRegistry.ISettings): void {
-    console.log(
-      'jupyterlab-voice-control settings loaded:',
-      settings.composite
-    );
     // TODO
     this.language = 'en-US';
+    this.speak = settings.composite.speak as boolean;
     this.confidenceThreshold = settings.composite.confidenceThreshold as number;
+    this.suggestionThreshold = settings.composite.suggestionThreshold as number;
     this.commands = settings.composite.commands as any as IVoiceCommand[];
   }
 
