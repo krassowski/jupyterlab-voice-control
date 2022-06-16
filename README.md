@@ -21,26 +21,35 @@ useful/promising and would like to leave any feedback which would be greatly app
 
 To use this extension look for a microphone (![microphone icon][enabled]) icon on the status bar.
 
+![Initial icon location in the status bar][recognition-disabled]
+
 Press the disabled microphone icon (![disabled microphone icon][disabled]) to start voice recognition (or use <kbd>Alt</kbd> + <kbd>v</kbd> shortcut). You will need to agree for the browser to use your microphone:
 
-![microphone access dialog in Chrome][chrome-microphone]
+![Microphone access dialog in Chrome][chrome-microphone]
 
 You can use any of the commands available in the [command palette](https://jupyterlab.readthedocs.io/en/latest/user/commands.html), for example try "Download" or "Run selected cells".
 
 Sometimes the speech recognition may be inaccurate, or you may misremember the name of the command.
-In those cases the voice control assistant will prompt you with suggestions by showing
-"Did you mean..." and one or more suggestions on the status bar. You can accept the first suggestion by saying "yes",
-or choose a subsequent suggestion by saying for example "second suggestion".
-Speech synthesis option is also available (in the settings) if you prefer it over checking the status bar continuously.
+In those cases the voice control assistant will prompt you with suggestions with words
+"Did you mean..." and one or more suggestions on the status bar:
 
-If there are no errors or suggestions, the recognised speech will be shown on the status bar together with a confidence estimate.
+![Suggestion saying "Did you mean New Launcher?"][did-you-mean]
+
+- You can accept the first suggestion by saying "yes".
+- To choose the second suggestion say "second suggestion", and so on.
+- Speech synthesis option is available (in the settings) if you prefer it over checking the status bar continuously.
+- The threshold for inclusion of a similar-sounding phrase as a suggestion can be adjusted in the settings.
+
+If there are no errors or suggestions, the recognised speech will be shown on the status bar together with a confidence estimate:
+
+![Recognised phrase "close all tabs" with 87% confidence][recognised]
 
 By default commands recognised with low confidence (<50%) will not be executed (as it is deemed safer in case of any potentially destructive actions), but you can change the threshold in the settings.
 
 ### Creating custom commands
 
 In the settings editor you can assign custom phrases to commands in the same way as you can configure shortcuts.
-We refer to the words you need speak in order to execute a command as _trigger phrase_.
+We refer to the words you need to say in order to execute a command as _trigger phrase_.
 
 The voice control extension provides additional commands for interaction with the interface such as typing text (`vc:insert-text`), accepting suggestions (`vc:accept-suggestion`), stopping recognition (`vc:stop-listening`), etc.
 
@@ -61,6 +70,9 @@ appends notebook file extension (`.ipynb`) as it can be problematic for speech r
 [enabled]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/style/icons/microphone.svg?sanitize=true
 [disabled]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/style/icons/microphone-off.svg?sanitize=true
 [chrome-microphone]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/docs/images/chrome-microphone.png
+[recognition-disabled]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/docs/images/recognition-disabled.png
+[recognised]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/docs/images/recognised.png
+[did-you-mean]: https://raw.githubusercontent.com/krassowski/jupyterlab-voice-control/main/docs/images/did-you-mean.png
 
 ## Requirements
 
