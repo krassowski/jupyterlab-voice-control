@@ -231,7 +231,18 @@ export class VoiceController {
     this.jupyterCommands.clear();
     this.commandRegistry
       .listCommands()
-      .filter(commandID => this.commandRegistry.isVisible(commandID))
+      .filter(commandID => {
+        try {
+          return this.commandRegistry.isVisible(commandID);
+        } catch (e) {
+          // some commands require arguments to `isVisible` thus
+          // we cannot know if they should be included or not,
+          // but since users can specify custom trigger phrases
+          // with appropriate arguments in settings, we do not
+          // want to exclude those commands.
+          return true;
+        }
+      })
       .map(commandID => {
         try {
           const label = this.commandRegistry.label(commandID);
