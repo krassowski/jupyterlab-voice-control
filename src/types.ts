@@ -1,10 +1,17 @@
 import type { PartialJSONObject } from '@lumino/coreutils';
 
+export interface IExecutableCommand {
+  id: string;
+  label: string;
+  arguments?: PartialJSONObject;
+}
+
 export interface IVoiceControlStatus {
   enabled: boolean;
   lastResult?: string;
   lastConfidence?: number;
   error?: string;
+  executed?: IExecutableCommand;
 }
 
 export interface IVoiceCommand {

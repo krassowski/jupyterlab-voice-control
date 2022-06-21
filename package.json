@@ -1,6 +1,6 @@
 {
   "name": "jupyterlab-voice-control",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Voice commands for JupyterLab",
   "keywords": [
     "jupyter",

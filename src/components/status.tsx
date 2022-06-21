@@ -28,18 +28,24 @@ export class VoiceControlStatusIndicator extends ReactWidget {
           const icon = status.enabled
             ? recognitionEnabledIcon
             : recognitionDisabledIcon;
-          const text = this.trans.__(
-            'Last voice recognition result: %1 with confidence %2',
-            status.lastResult,
-            status.lastConfidence
-          );
-          const shortText = this.trans.__(
-            '%1 (%2%)',
-            status.lastResult,
-            status.lastConfidence
-              ? Math.round(status.lastConfidence * 100)
-              : '?'
-          );
+          const confidence = status.lastConfidence
+            ? Math.round(status.lastConfidence * 100)
+            : '?';
+          const text = status.executed
+            ? this.trans.__(
+                'Executed %1 based on %2 (%3%)',
+                status.executed.label,
+                status.lastResult,
+                confidence
+              )
+            : this.trans.__(
+                'Recognised %1 (%2%) but do not understand.',
+                status.lastResult,
+                confidence
+              );
+          const shortText = status.executed
+            ? this.trans.__('🙂 %1', status.lastResult)
+            : this.trans.__('🤔 %1 (%2%)', status.lastResult, confidence);
           const controller = this.controller;
           return (
             <GroupItem

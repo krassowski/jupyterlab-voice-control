@@ -6,7 +6,11 @@ import { showErrorMessage, ICommandPalette } from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { TranslationBundle } from '@jupyterlab/translation';
 
-import { IVoiceControlStatus, IVoiceCommand } from './types';
+import {
+  IVoiceControlStatus,
+  IVoiceCommand,
+  IExecutableCommand
+} from './types';
 
 function normalise(text: string): string {
   return text.toLowerCase().trim();
@@ -23,9 +27,14 @@ interface IAcceptOptions {
 }
 
 interface ISuggestion {
-  id: string;
-  label: string;
+  command: IExecutableCommand;
   score: number;
+}
+
+interface IMatchingResult {
+  match?: IExecutableCommand;
+  suggestions?: ISuggestion[];
+  message?: string;
 }
 
 const ordinals: Record<string, number> = {
@@ -80,13 +89,16 @@ export class VoiceController {
     };
 
     this.recognition.onerror = event => {
-      const title = 'Speech recognition not available';
+      const title = this.trans.__('Speech recognition not available');
       switch (event.error) {
         case 'audio-capture':
-          showErrorMessage(title, 'Microphone not detected');
+          showErrorMessage(title, this.trans.__('Microphone not detected'));
           break;
         case 'not-allowed':
-          showErrorMessage(title, 'Access to microphone was denied or blocked');
+          showErrorMessage(
+            title,
+            this.trans.__('Access to microphone was denied or blocked')
+          );
           break;
         case 'no-speech':
           this._status.error = this.trans.__('No speech was detected');
@@ -99,37 +111,46 @@ export class VoiceController {
     this.updateGrammar();
   }
 
-  matchPhrase(phrase: string): ISuggestion[] {
+  matchPhrase(phrase: string): IMatchingResult {
     // First try to match against our voice commands which get a higher priority
     for (const command of this.commands) {
       const match = phrase.match(new RegExp(command.phrase, 'i'));
       if (match != null) {
         if (!this.commandRegistry.hasCommand(command.command)) {
-          this.communicate(
-            this.trans.__(
+          return {
+            message: this.trans.__(
               'Matched "%1" phrase but command "%2" is not in the registry',
               command.phrase,
               command.command
             )
-          );
-          return [];
+          };
         }
         const args = Object.assign({}, command.arguments);
         if (match.groups) {
           Object.assign(args, match.groups);
         }
-        this.commandRegistry.execute(command.command, args);
-        return [];
+        return {
+          match: {
+            id: command.command,
+            label: command.phrase,
+            arguments: args
+          }
+        };
       }
     }
 
     // If it did not succeed, match against all JupyterLab commands
     const command = this.jupyterCommands.get(phrase);
     if (command) {
-      this.commandRegistry.execute(command.id);
-      return [];
+      return {
+        match: {
+          id: command.id,
+          label: command.label,
+          arguments: {}
+        }
+      };
     } else {
-      let best = 999;
+      let best = Infinity;
       let bestCandidates: IJupyterCommand[] = [];
       for (const [candidateLabel, command] of this.jupyterCommands.entries()) {
         const matchScore = Math.min(
@@ -143,11 +164,6 @@ export class VoiceController {
           bestCandidates.push(command);
         }
       }
-      console.log(
-        bestCandidates,
-        best / phrase.length,
-        this.suggestionThreshold
-      );
       if (
         bestCandidates.length !== 0 &&
         best / phrase.length <= this.suggestionThreshold
@@ -160,19 +176,23 @@ export class VoiceController {
                 .map((candidate, index) => `${index + 1}) ${candidate.label}`)
                 .join(' or ')
         );
-
-        this.communicate(suggestionText);
-
-        return bestCandidates.map(candidate => {
+        const suggestions = bestCandidates.map(candidate => {
           return {
-            id: candidate.id,
-            label: candidate.label,
+            command: {
+              id: candidate.id,
+              label: candidate.label
+            },
             score: best
           };
         });
+
+        return {
+          message: suggestionText,
+          suggestions: suggestions
+        };
       }
     }
-    return [];
+    return {};
   }
 
   communicate(message: string): void {
@@ -195,15 +215,29 @@ export class VoiceController {
       return;
     }
     this._status.error = undefined;
-    this._currentSuggestions = this.matchPhrase(speech);
+    this._status.executed = undefined;
+
+    const matchResult = this.matchPhrase(speech);
+    if (matchResult.match) {
+      this.execute(matchResult.match);
+    }
+    if (matchResult.message) {
+      this.communicate(matchResult.message);
+    }
+    this._currentSuggestions = matchResult.suggestions || [];
     this.statusChanged.emit(this._status);
+  }
+
+  execute(command: IExecutableCommand): void {
+    this._status.executed = command;
+    this.commandRegistry.execute(command.id, command.arguments);
   }
 
   acceptSuggestion(options: IAcceptOptions): void {
     const option = options.option != null ? ordinals[options.option] - 1 : 0;
     if (typeof option !== 'undefined') {
       if (this._currentSuggestions.length > option) {
-        this.commandRegistry.execute(this._currentSuggestions[option].id);
+        this.execute(this._currentSuggestions[option].command);
         this._currentSuggestions = [];
       } else {
         this.communicate(
