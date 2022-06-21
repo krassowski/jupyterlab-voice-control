@@ -11,9 +11,6 @@ Voice commands for JupyterLab extension relies on experimental Speech Recognitio
 Please be aware that the Speech Recognition method is an implementation detail of the browser,
 and some browsers, including Google Chrome, may send recordings of your voice to cloud for recognition.
 
-Text edition capabilities are severely limited (e.g. it is only possible to delete words typed using the voice commands),
-but many issues are expected to be resolved with upgrade to CodeMirror 6, anticipated for JupyterLab 4.
-
 While it is currently just proof of concept, please do get in touch by opening a new issue if you found this extension
 useful/promising and would like to leave any feedback which would be greatly appreciated.
 

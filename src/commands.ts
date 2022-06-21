@@ -1,3 +1,7 @@
+import { Widget } from '@lumino/widgets';
+import { NotebookPanel } from '@jupyterlab/notebook';
+import { CodeEditor } from '@jupyterlab/codeeditor';
+
 interface ITypeOptions {
   text?: string;
 }
@@ -25,11 +29,40 @@ export function moveCursor(options: ICursorMove) {
   }
 }
 
-export function typeText(options: ITypeOptions) {
+function getEditor(widget: Widget | null): CodeEditor.IEditor | null {
+  if (widget instanceof NotebookPanel) {
+    const activeCell = widget.content.activeCell;
+    if (activeCell) {
+      return activeCell.editor;
+    }
+  } else if (typeof (widget as any).content.editor !== 'undefined') {
+    return (widget as any).content.editor;
+  } else if (typeof (widget as any).editor !== 'undefined') {
+    return (widget as any).editor;
+  }
+  return null;
+}
+
+export function typeText(options: ITypeOptions, currentWidget: Widget | null) {
   if (typeof options.text === 'undefined') {
     return 'No text provided';
   }
+
+  // Try to use Editor interface if current widget has it (and the editor has focus)
+  const editor = getEditor(currentWidget);
   const focused = document.activeElement;
+
+  if (editor && editor.hasFocus && editor.host.contains(focused)) {
+    const cursor = editor.getCursorPosition();
+    const offset = editor.getOffsetAt(cursor);
+    editor.model.value.insert(offset, options.text);
+    const updatedPosition = editor.getPositionAt(offset + options.text.length);
+    if (updatedPosition) {
+      editor.setCursorPosition(updatedPosition);
+    }
+    return;
+  }
+
   if (!focused) {
     return 'Cannot type: no element is focused';
   }
@@ -60,11 +93,28 @@ interface IDeleteText {
   what?: 'last word';
 }
 
-export function deleteText(options: IDeleteText) {
+export function deleteText(options: IDeleteText, currentWidget: Widget | null) {
   if (typeof options.what === 'undefined') {
     return 'No "what" argument provided';
   }
+
+  // Try to use Editor interface if current widget has it (and the editor has focus)
+  const editor = getEditor(currentWidget);
   const focused = document.activeElement;
+
+  if (editor && editor.hasFocus && editor.host.contains(focused)) {
+    const cursor = editor.getCursorPosition();
+    const offset = editor.getOffsetAt(cursor);
+    const valueUpToCursor = editor.model.value.text.substring(0, offset);
+    const lastSpace = valueUpToCursor.lastIndexOf(' ');
+    editor.model.value.remove(lastSpace, offset);
+    const updatedPosition = editor.getPositionAt(lastSpace);
+    if (updatedPosition) {
+      editor.setCursorPosition(updatedPosition);
+    }
+    return;
+  }
+
   if (!focused) {
     return 'Cannot delete: no element is focused';
   }

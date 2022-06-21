@@ -146,12 +146,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
     app.commands.addCommand('vc:type-text', {
       label: trans.__('Type Text Into Focused Element'),
-      execute: args => typeText(args)
+      execute: args => typeText(args, app.shell.currentWidget)
     });
 
     app.commands.addCommand('vc:delete-text', {
       label: trans.__('Delete Text From Focused Element'),
-      execute: args => deleteText(args)
+      execute: args => deleteText(args, app.shell.currentWidget)
     });
 
     app.commands.addCommand('vc:accept-suggestion', {
