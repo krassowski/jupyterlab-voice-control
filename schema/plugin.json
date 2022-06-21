@@ -65,7 +65,7 @@
           "command": "notebook:run-cell-and-insert-below"
         },
         {
-          "phrase": "^delete (?<what>last word)",
+          "phrase": "^delete (?<what>last word|last line)",
           "command": "vc:delete-text"
         },
         {

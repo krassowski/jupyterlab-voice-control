@@ -90,13 +90,14 @@ export function typeText(options: ITypeOptions, currentWidget: Widget | null) {
 }
 
 interface IDeleteText {
-  what?: 'last word';
+  what?: 'last word' | 'last line';
 }
 
 export function deleteText(options: IDeleteText, currentWidget: Widget | null) {
   if (typeof options.what === 'undefined') {
     return 'No "what" argument provided';
   }
+  const deleteUntil = options.what === 'last word' ? ' ' : '\n';
 
   // Try to use Editor interface if current widget has it (and the editor has focus)
   const editor = getEditor(currentWidget);
@@ -106,8 +107,10 @@ export function deleteText(options: IDeleteText, currentWidget: Widget | null) {
     const cursor = editor.getCursorPosition();
     const offset = editor.getOffsetAt(cursor);
     const valueUpToCursor = editor.model.value.text.substring(0, offset);
-    const lastSpace = valueUpToCursor.lastIndexOf(' ');
-    editor.model.value.remove(lastSpace, offset);
+    // TODO: use regular expressions to detect any number of white spaces?
+    const lastSpace = valueUpToCursor.lastIndexOf(deleteUntil);
+    const start = lastSpace === -1 ? 0 : lastSpace;
+    editor.model.value.remove(start, offset);
     const updatedPosition = editor.getPositionAt(lastSpace);
     if (updatedPosition) {
       editor.setCursorPosition(updatedPosition);
@@ -120,8 +123,9 @@ export function deleteText(options: IDeleteText, currentWidget: Widget | null) {
   }
   if (typeof (focused as any).value !== 'undefined') {
     const value = (focused as any).value;
-    const lastSpace = value.lastIndexOf(' ');
-    (focused as any).value = value.substring(0, lastSpace);
+    const lastSpace = value.lastIndexOf(deleteUntil);
+    const end = lastSpace === -1 ? 0 : lastSpace;
+    (focused as any).value = value.substring(0, end);
   }
 }
 
