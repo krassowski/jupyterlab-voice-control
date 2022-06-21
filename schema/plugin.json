@@ -22,8 +22,8 @@
     "suggestionThreshold": {
       "title": "Suggestion threshold",
       "type": "number",
-      "default": 4,
-      "description": "Only suggest commands if they are as similar to trigger phrase so that no more than n edits would be needed to transform one into the other."
+      "default": 0.5,
+      "description": "Only suggest commands if they are as similar to trigger phrase as `#edits/len(phrase) < threshold`, where `#edits` is the number of operations needed to transform phrase into the command name, and `len(phrase)` is the number of letters in the recognised trigger phrase."
     },
     "speak": {
       "title": "Enable speach syntehsis",

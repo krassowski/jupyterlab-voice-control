@@ -11,6 +11,8 @@ import { VoiceControlStatusIndicator } from './components/status';
 import { VoiceController } from './controller';
 import { scrollBy, typeText, moveCursor, deleteText } from './commands';
 
+import { IVoiceCommand } from './types';
+
 const PLUGIN_ID = 'jupyterlab-voice-control:plugin';
 
 /**
@@ -36,19 +38,57 @@ const plugin: JupyterFrontEndPlugin<void> = {
     const controller = new VoiceController(app.commands, trans, palette);
 
     let canonical: ISettingRegistry.ISchema | null;
+    let configuredVoiceCommands: string[] = [];
     /**
      * Populate the plugin's schema defaults.
      */
     const populate = (schema: ISettingRegistry.ISchema) => {
+      const commandsSchema = schema.properties!.commands;
+      const defaultCommands = (
+        commandsSchema.default as unknown as IVoiceCommand[]
+      ).map(voiceCommand => voiceCommand.command);
+      const availableCommands = new Set(app.commands.listCommands());
+      const userCommands = configuredVoiceCommands.filter(
+        x => !defaultCommands.includes(x)
+      );
+      const commandsUnion = new Set([
+        ...availableCommands,
+        ...userCommands,
+        ...defaultCommands
+      ]);
+      console.log(userCommands);
+      const unavailableUserCommands = userCommands.filter(
+        x => !availableCommands.has(x)
+      );
+      if (unavailableUserCommands.length) {
+        console.warn(
+          'User commands',
+          unavailableUserCommands,
+          'provided for custom voice commands are not available in this installation of JupyterLab'
+        );
+      }
+      const unavailableDefaultCommands = defaultCommands.filter(
+        x => !availableCommands.has(x)
+      );
+      if (unavailableDefaultCommands.length) {
+        console.warn(
+          'Default commands',
+          unavailableDefaultCommands,
+          'are not available in this installation of JupyterLab'
+        );
+      }
       (
-        schema.properties!.commands.items! as ISettingRegistry.IProperty
-      ).properties!.command.enum = app.commands.listCommands();
+        commandsSchema.items! as ISettingRegistry.IProperty
+      ).properties!.command.enum = [...commandsUnion];
     };
 
     if (settingRegistry) {
       settingRegistry
         .load(plugin.id)
         .then(settings => {
+          configuredVoiceCommands = (
+            settings.composite.commands as unknown as IVoiceCommand[]
+          ).map(voiceCommand => voiceCommand.command);
           settings.changed.connect(controller.configure.bind(controller));
           controller.configure(settings);
         })

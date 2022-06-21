@@ -1,31 +1,15 @@
 import { distance } from 'fastest-levenshtein';
 import { CommandRegistry } from '@lumino/commands';
-import { PartialJSONObject } from '@lumino/coreutils';
 
 import { Signal } from '@lumino/signaling';
 import { showErrorMessage, ICommandPalette } from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { TranslationBundle } from '@jupyterlab/translation';
 
-import { IVoiceControlStatus } from './types';
+import { IVoiceControlStatus, IVoiceCommand } from './types';
 
 function normalise(text: string): string {
   return text.toLowerCase().trim();
-}
-
-interface IVoiceCommand {
-  /**
-   * Trigger phrase, can be a regular expresion with named capturing groups.
-   */
-  phrase: string;
-  /**
-   * Jupyter command ID.
-   */
-  command: string;
-  /**
-   * Arguments passed to the command, will be merged with any captured groups.
-   */
-  arguments?: PartialJSONObject;
 }
 
 interface IJupyterCommand {
@@ -60,7 +44,7 @@ export class VoiceController {
   protected jupyterCommands: Map<string, IJupyterCommand>;
   protected speak = false;
   protected commands: Array<IVoiceCommand> = [];
-  protected suggestionThreshold = 1;
+  protected suggestionThreshold = 0.5;
   private counter = 0;
   private _currentSuggestions: ISuggestion[] = [];
 
@@ -74,7 +58,7 @@ export class VoiceController {
       window.SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       showErrorMessage(
-        trans.__('Speach recognition not supported'),
+        trans.__('Speech recognition not supported'),
         trans.__('Your browser does not support speech recognition.')
       );
       throw Error('Not supported');
@@ -159,7 +143,15 @@ export class VoiceController {
           bestCandidates.push(command);
         }
       }
-      if (bestCandidates.length !== 0 && best <= this.suggestionThreshold) {
+      console.log(
+        bestCandidates,
+        best / phrase.length,
+        this.suggestionThreshold
+      );
+      if (
+        bestCandidates.length !== 0 &&
+        best / phrase.length <= this.suggestionThreshold
+      ) {
         const suggestionText = this.trans.__(
           'Did you mean %1?',
           bestCandidates.length === 1
@@ -272,7 +264,7 @@ export class VoiceController {
     this.speak = settings.composite.speak as boolean;
     this.confidenceThreshold = settings.composite.confidenceThreshold as number;
     this.suggestionThreshold = settings.composite.suggestionThreshold as number;
-    this.commands = settings.composite.commands as any as IVoiceCommand[];
+    this.commands = settings.composite.commands as unknown as IVoiceCommand[];
   }
 
   enable(): void {
